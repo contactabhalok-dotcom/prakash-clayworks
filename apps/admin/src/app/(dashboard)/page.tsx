@@ -107,13 +107,21 @@ export default function DashboardPage() {
   }
 
   const getStatusColor = (status: Order['orderStatus']) => {
-    const colors = {
+    const colors: Record<Order['orderStatus'], string> = {
       new: 'bg-blue-100 text-blue-700',
       confirmed: 'bg-indigo-100 text-indigo-700',
       packing: 'bg-yellow-100 text-yellow-700',
       shipped: 'bg-purple-100 text-purple-700',
       delivered: 'bg-green-100 text-green-700',
       cancelled: 'bg-red-100 text-red-700',
+      return_requested: 'bg-orange-100 text-orange-700',
+      return_approved: 'bg-lime-100 text-lime-700',
+      return_rejected: 'bg-red-100 text-red-700',
+      return_received: 'bg-cyan-100 text-cyan-700',
+      refund_processing: 'bg-amber-100 text-amber-700',
+      refunded: 'bg-emerald-100 text-emerald-700',
+      exchanged: 'bg-teal-100 text-teal-700',
+      exchange_delivered: 'bg-green-100 text-green-700',
     };
     return colors[status] || 'bg-slate-100 text-slate-700';
   };
