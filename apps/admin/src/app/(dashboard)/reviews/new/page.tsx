@@ -14,9 +14,10 @@ export default function NewReviewPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    productId: '',
     customerName: '',
     rating: 5,
-    review: { en: '', hi: '' },
+    review: '',
     isApproved: true,
   });
 
@@ -57,6 +58,20 @@ export default function NewReviewPage() {
           <CardContent className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
+                Product ID *
+              </label>
+              <Input
+                value={formData.productId}
+                onChange={(e) =>
+                  setFormData({ ...formData, productId: e.target.value })
+                }
+                placeholder="e.g., product-123"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
                 Customer Name *
               </label>
               <Input
@@ -95,36 +110,19 @@ export default function NewReviewPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Review (English) *
+                Review *
               </label>
               <Textarea
-                value={formData.review.en}
+                value={formData.review}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    review: { ...formData.review, en: e.target.value },
+                    review: e.target.value,
                   })
                 }
-                placeholder="Write the review in English..."
+                placeholder="Write the review..."
                 rows={4}
                 required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Review (Hindi)
-              </label>
-              <Textarea
-                value={formData.review.hi}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    review: { ...formData.review, hi: e.target.value },
-                  })
-                }
-                placeholder="Write the review in Hindi... (optional)"
-                rows={4}
               />
             </div>
 
