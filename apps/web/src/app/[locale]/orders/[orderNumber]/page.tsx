@@ -146,6 +146,14 @@ export default function OrderDetailsPage() {
       shipped: t('statusShipped') || 'Shipped',
       delivered: t('statusDelivered') || 'Delivered',
       cancelled: t('statusCancelled') || 'Cancelled',
+      return_requested: t('statusReturnRequested') || 'Return Requested',
+      return_approved: t('statusReturnApproved') || 'Return Approved',
+      return_rejected: t('statusReturnRejected') || 'Return Rejected',
+      return_received: t('statusReturnReceived') || 'Return Received',
+      refund_processing: t('statusRefundProcessing') || 'Refund Processing',
+      refunded: t('statusRefunded') || 'Refunded',
+      exchanged: t('statusExchanged') || 'Exchanged',
+      exchange_delivered: t('statusExchangeDelivered') || 'Exchange Delivered',
     };
     return labels[status];
   };
