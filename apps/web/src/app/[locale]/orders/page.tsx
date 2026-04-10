@@ -92,6 +92,14 @@ export default function OrdersPage() {
       shipped: 'bg-indigo-100 text-indigo-700',
       delivered: 'bg-green-100 text-green-700',
       cancelled: 'bg-red-100 text-red-700',
+      return_requested: 'bg-orange-100 text-orange-700',
+      return_approved: 'bg-lime-100 text-lime-700',
+      return_rejected: 'bg-red-100 text-red-700',
+      return_received: 'bg-cyan-100 text-cyan-700',
+      refund_processing: 'bg-amber-100 text-amber-700',
+      refunded: 'bg-emerald-100 text-emerald-700',
+      exchanged: 'bg-teal-100 text-teal-700',
+      exchange_delivered: 'bg-green-100 text-green-700',
     };
     return colors[status];
   };
@@ -104,6 +112,14 @@ export default function OrdersPage() {
       shipped: t('statusShipped') || 'Shipped',
       delivered: t('statusDelivered') || 'Delivered',
       cancelled: t('statusCancelled') || 'Cancelled',
+      return_requested: t('statusReturnRequested') || 'Return Requested',
+      return_approved: t('statusReturnApproved') || 'Return Approved',
+      return_rejected: t('statusReturnRejected') || 'Return Rejected',
+      return_received: t('statusReturnReceived') || 'Return Received',
+      refund_processing: t('statusRefundProcessing') || 'Refund Processing',
+      refunded: t('statusRefunded') || 'Refunded',
+      exchanged: t('statusExchanged') || 'Exchanged',
+      exchange_delivered: t('statusExchangeDelivered') || 'Exchange Delivered',
     };
     return labels[status];
   };
