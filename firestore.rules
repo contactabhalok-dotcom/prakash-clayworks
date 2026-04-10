@@ -1,0 +1,152 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is an active admin
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isActive == true;
+    }
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Admins collection
+    match /admins/{adminId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Products collection
+    match /products/{productId} {
+      allow read: if true; // Public read
+      allow write: if isAdmin(); // Admin write
+    }
+
+    // Categories collection
+    match /categories/{categoryId} {
+      allow read: if true; // Public read
+      allow write: if isAdmin(); // Admin write
+    }
+
+    // Orders collection
+    match /orders/{orderId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Enquiries collection
+    match /enquiries/{enquiryId} {
+      allow read: if isAdmin();
+      allow create: if true; // Anyone can submit enquiry
+      allow update, delete: if isAdmin();
+    }
+
+    // Banners collection
+    match /banners/{bannerId} {
+      allow read: if true; // Public read
+      allow write: if isAdmin(); // Admin write
+    }
+
+    // Reviews collection
+    match /reviews/{reviewId} {
+      allow read: if true; // Public read approved reviews
+      allow create: if true; // Anyone can submit reviews (requires admin approval)
+      allow update, delete: if isAdmin();
+    }
+
+    // Coupons collection - THIS IS THE IMPORTANT ONE
+    match /coupons/{couponId} {
+      allow read: if true; // Public read for validation on checkout
+      allow write: if isAdmin(); // Only admins can create/update/delete
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAdmin();
+    }
+
+    // Wallets collection
+    match /wallets/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update, delete: if isAdmin();
+    }
+
+    // Wallet transactions
+    match /wallet_transactions/{transactionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Support tickets
+    match /support_tickets/{ticketId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+    }
+
+    // User settings
+    match /user_settings/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create, update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAdmin();
+    }
+
+    // Admin notifications
+    match /admin_notifications/{notificationId} {
+      allow read: if isAdmin();
+      allow write: if isAuthenticated(); // Allow system to create notifications
+    }
+
+    // Offers collection
+    match /offers/{offerId} {
+      allow read: if true; // Public read for website
+      allow write: if isAdmin(); // Only admins can create/update/delete
+    }
+
+    // Saved Payments collection
+    match /saved_payments/{paymentId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Return requests collection
+    match /return_requests/{returnId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin(); // Only admin can update return status
+      allow delete: if isAdmin();
+    }
+
+    // Refund accounts collection
+    match /refund_accounts/{accountId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Site settings collection
+    match /site_settings/{settingId} {
+      allow read: if true; // Public read for website configuration
+      allow write: if isAdmin(); // Only admins can modify settings
+    }
+  }
+}
