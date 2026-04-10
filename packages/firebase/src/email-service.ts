@@ -13,7 +13,7 @@ interface OrderEmailData {
   customerEmail: string;
   total: number;
   items: Array<{
-    title: Record<string, string>;
+    title: { en: string; hi: string };
     quantity: number;
     price: number;
   }>;
@@ -111,7 +111,7 @@ function createOrderEmailTemplate(
                 ${orderData.items.map((item, index) => `
                 <tr${index % 2 === 0 ? ' style="background-color: #f9f9f9;"' : ''}>
                   <td style="padding: 12px 20px;">
-                    <strong style="color: #333333; font-size: 15px;">${item.title.en || item.title}</strong>
+                    <strong style="color: #333333; font-size: 15px;">${item.title.en}</strong>
                     <p style="margin: 3px 0 0; color: #666666; font-size: 14px;">
                       Qty: ${item.quantity} × ${formatPrice(item.price)}
                     </p>
