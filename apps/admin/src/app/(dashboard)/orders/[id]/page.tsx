@@ -96,6 +96,14 @@ export default function OrderDetailPage() {
       shipped: 'info',
       delivered: 'success',
       cancelled: 'danger',
+      return_requested: 'warning',
+      return_approved: 'info',
+      return_rejected: 'danger',
+      return_received: 'info',
+      refund_processing: 'warning',
+      refunded: 'success',
+      exchanged: 'info',
+      exchange_delivered: 'success',
     };
     return variants[status];
   };

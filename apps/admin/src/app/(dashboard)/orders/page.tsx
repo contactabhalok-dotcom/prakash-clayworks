@@ -20,6 +20,9 @@ import {
   Truck,
   XCircle,
   ChevronDown,
+  RotateCcw,
+  Check,
+  ArrowRightLeft,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -30,6 +33,14 @@ const ORDER_STATUSES: { value: OrderStatus; label: string; icon: typeof Clock; c
   { value: 'shipped', label: 'Shipped', icon: Truck, color: 'bg-purple-100 text-purple-700' },
   { value: 'delivered', label: 'Delivered', icon: CheckCircle, color: 'bg-green-100 text-green-700' },
   { value: 'cancelled', label: 'Cancelled', icon: XCircle, color: 'bg-red-100 text-red-700' },
+  { value: 'return_requested', label: 'Return Requested', icon: RotateCcw, color: 'bg-orange-100 text-orange-700' },
+  { value: 'return_approved', label: 'Return Approved', icon: Check, color: 'bg-lime-100 text-lime-700' },
+  { value: 'return_rejected', label: 'Return Rejected', icon: XCircle, color: 'bg-red-100 text-red-700' },
+  { value: 'return_received', label: 'Return Received', icon: Package, color: 'bg-cyan-100 text-cyan-700' },
+  { value: 'refund_processing', label: 'Refund Processing', icon: Clock, color: 'bg-amber-100 text-amber-700' },
+  { value: 'refunded', label: 'Refunded', icon: CheckCircle, color: 'bg-emerald-100 text-emerald-700' },
+  { value: 'exchanged', label: 'Exchanged', icon: ArrowRightLeft, color: 'bg-teal-100 text-teal-700' },
+  { value: 'exchange_delivered', label: 'Exchange Delivered', icon: CheckCircle, color: 'bg-green-100 text-green-700' },
 ];
 
 export default function OrdersPage() {
