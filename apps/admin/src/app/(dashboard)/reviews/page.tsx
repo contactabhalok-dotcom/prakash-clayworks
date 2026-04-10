@@ -210,10 +210,7 @@ export default function ReviewsPage() {
                         {review.isApproved ? 'Approved' : 'Pending'}
                       </span>
                     </div>
-                    <p className="text-slate-700 mb-1">{review.review.en}</p>
-                    {review.review.hi && (
-                      <p className="text-slate-500 text-sm">{review.review.hi}</p>
-                    )}
+                    <p className="text-slate-700 mb-1">{review.review}</p>
                     <p className="text-xs text-slate-400 mt-2">
                       {formatDate(review.createdAt)}
                     </p>
