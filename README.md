@@ -92,13 +92,41 @@ See `apps/web/.env.example` for required environment variables.
 
 ## Deployment
 
+### GitHub Setup
+
+1. Create repository on GitHub:
+   - Go to https://github.com/new
+   - Repository name: `prakash-clayworks`
+   - Owner: `contactabhalok-dotcom`
+   - Set to **Private**
+   - **DO NOT** initialize with README, .gitignore, or license
+
+2. Push code to GitHub:
+```bash
+git remote add origin https://github.com/contactabhalok-dotcom/prakash-clayworks.git
+git branch -M main
+git push -u origin main
+```
+
 ### Vercel (Recommended)
 
-1. Push your code to GitHub
-2. Import project in Vercel
-3. Set root directory to `apps/web`
-4. Add all environment variables
-5. Deploy
+See [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) for detailed instructions.
+
+**Quick Start:**
+
+1. Go to https://vercel.com/new
+2. Import your GitHub repository
+3. Deploy TWO separate projects from the same repo:
+
+#### Web App (Customer Website)
+- **Root Directory:** `apps/web`
+- **Build Command:** `cd ../.. && pnpm install && cd apps/web && pnpm build`
+- **Environment Variables:** Copy from `apps/web/.env.local`
+
+#### Admin Dashboard
+- **Root Directory:** `apps/admin`
+- **Build Command:** `cd ../.. && pnpm install && cd apps/admin && pnpm build`
+- **Environment Variables:** Copy from `apps/admin/.env.local`
 
 ### Build Commands
 
@@ -108,6 +136,9 @@ cd apps/web && pnpm build
 
 # Build admin app
 cd apps/admin && pnpm build
+
+# Build both apps
+pnpm build
 ```
 
 ## Features Overview
