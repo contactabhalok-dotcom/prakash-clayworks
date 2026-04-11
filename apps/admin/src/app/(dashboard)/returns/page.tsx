@@ -58,9 +58,8 @@ export default function ReturnRequestsPage() {
     setProcessing(id);
     try {
       await updateReturnRequestStatus(id, status);
-      setReturns((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status } : r))
-      );
+      // Reload all return requests to get fresh data
+      await loadReturns();
     } catch (error) {
       console.error('Error updating return status:', error);
     } finally {
@@ -86,8 +85,24 @@ export default function ReturnRequestsPage() {
       ? returns
       : returns.filter((r) => r.status === filter);
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-IN', {
+  const formatDate = (date: any) => {
+    if (!date) return 'N/A';
+    
+    // Handle Firestore Timestamp objects
+    let jsDate: Date;
+    if (date.toDate) {
+      // Firestore Timestamp
+      jsDate = date.toDate();
+    } else if (date.seconds) {
+      // Firestore timestamp object (from serverTimestamp)
+      jsDate = new Date(date.seconds * 1000);
+    } else {
+      jsDate = new Date(date);
+    }
+    
+    if (isNaN(jsDate.getTime())) return 'N/A';
+    
+    return jsDate.toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ShoppingCart, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShoppingCart, Eye, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -21,22 +21,21 @@ export function ProductCarousel() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const { addItem, openCart } = useCartStore();
 
-  // Responsive items per view
   const getItemsPerView = () => {
     if (typeof window === 'undefined') return 4;
     const width = window.innerWidth;
-    if (width < 640) return 2; // mobile - 2 products
-    if (width < 768) return 2; // sm
-    if (width < 1024) return 3; // md
-    if (width < 1280) return 4; // lg
-    return 5; // xl and above
+    if (width < 640) return 2;
+    if (width < 768) return 2;
+    if (width < 1024) return 3;
+    if (width < 1280) return 4;
+    return 5;
   };
 
   const [itemsPerView, setItemsPerView] = useState(4);
 
   useEffect(() => {
     const handleResize = () => setItemsPerView(getItemsPerView());
-    handleResize(); // Set initial value
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -55,19 +54,18 @@ export function ProductCarousel() {
     fetchProducts();
   }, []);
 
-  // Auto-play carousel
   useEffect(() => {
     if (!isAutoPlaying || products.length === 0) return;
 
     const maxIndex = Math.max(0, products.length - itemsPerView);
-    if (maxIndex === 0) return; // Don't auto-play if all products are visible
+    if (maxIndex === 0) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => {
         const next = prev + 1;
         return next > maxIndex ? 0 : next;
       });
-    }, 4000); // Auto-advance every 4 seconds
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [isAutoPlaying, products.length, itemsPerView]);
@@ -96,36 +94,49 @@ export function ProductCarousel() {
 
   return (
     <section
-      className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-white to-warm-beige/5 relative"
+      className="py-14 sm:py-18 md:py-24 bg-gradient-to-b from-white via-warm-beige/10 to-white relative overflow-hidden"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
     >
-      <div className="container mx-auto px-4">
+      {/* Background Decorations */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+        className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-terracotta/5 to-gold/5 rounded-full blur-3xl"
+      />
+      <motion.div
+        animate={{ rotate: -360 }}
+        transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+        className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-gold/5 to-terracotta/5 rounded-full blur-3xl"
+      />
+
+      <div className="container mx-auto px-4 relative z-10">
         {/* Section Header */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-10 sm:mb-14 gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-12 sm:mb-16 gap-4">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-block px-4 py-1.5 rounded-full bg-terracotta/10 text-terracotta text-sm font-semibold mb-3 tracking-wide">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-terracotta/10 text-terracotta text-sm font-semibold mb-3 tracking-wide border border-terracotta/20">
+              <Sparkles className="h-4 w-4" />
               NEW ARRIVALS
-            </span>
+            </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-clay-brown">
               Latest Products
             </h2>
             <div className="mt-3 h-1 w-20 rounded-full bg-gradient-to-r from-terracotta to-gold" />
           </motion.div>
 
-          {/* Navigation Arrows - Desktop */}
-          <div className="hidden sm:flex gap-3">
+          {/* Navigation Arrows */}
+          <div className="flex gap-3">
             <button
               onClick={handlePrev}
               disabled={!canGoPrev}
               className={`p-3.5 rounded-full border-2 transition-all duration-300 ${
                 canGoPrev
-                  ? 'border-clay-brown text-clay-brown hover:bg-clay-brown hover:text-white hover:shadow-lg'
+                  ? 'border-clay-brown text-clay-brown hover:bg-gradient-to-br hover:from-terracotta hover:to-gold hover:text-white hover:shadow-lg hover:scale-105'
                   : 'border-gray-200 text-gray-300 cursor-not-allowed'
               }`}
               aria-label="Previous"
@@ -137,7 +148,7 @@ export function ProductCarousel() {
               disabled={!canGoNext}
               className={`p-3.5 rounded-full border-2 transition-all duration-300 ${
                 canGoNext
-                  ? 'border-clay-brown text-clay-brown hover:bg-clay-brown hover:text-white hover:shadow-lg'
+                  ? 'border-clay-brown text-clay-brown hover:bg-gradient-to-br hover:from-terracotta hover:to-gold hover:text-white hover:shadow-lg hover:scale-105'
                   : 'border-gray-200 text-gray-300 cursor-not-allowed'
               }`}
               aria-label="Next"
@@ -166,33 +177,33 @@ export function ProductCarousel() {
               return (
                 <motion.div
                   key={`${product.id}-${currentIndex}-${index}`}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.08 }}
                 >
-                  <Card className="group overflow-hidden h-full flex flex-col">
+                  <Card className="group overflow-hidden h-full flex flex-col border-0 shadow-md hover:shadow-2xl transition-all duration-500">
                     {/* Image */}
-                    <div className="relative aspect-square overflow-hidden bg-warm-beige/30">
+                    <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-warm-beige/50 to-warm-beige/30">
                       <Link href={`/product/${product.id}`}>
                         <img
                           src={product.images[0] || '/placeholder.jpg'}
                           alt={title}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                       </Link>
 
                       {/* Badges */}
                       {hasDiscount && (
-                        <Badge className="absolute top-3 left-3 bg-terracotta text-white shadow-lg">
+                        <Badge className="absolute top-3 left-3 bg-gradient-to-r from-terracotta to-orange-600 text-white shadow-lg border-0 font-bold">
                           {discount}% OFF
                         </Badge>
                       )}
 
                       {/* Quick Actions */}
-                      <div className="absolute bottom-3 left-3 right-3 flex gap-2 translate-y-2 opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 transition-all duration-300">
+                      <div className="absolute bottom-3 left-3 right-3 flex gap-2 translate-y-4 opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 transition-all duration-300">
                         <Button
                           size="sm"
-                          className="flex-1"
+                          className="flex-1 bg-gradient-to-r from-terracotta to-gold hover:from-terracotta/90 hover:to-gold/90 shadow-lg border-0"
                           onClick={(e) => {
                             e.preventDefault();
                             addItem(product);
@@ -200,19 +211,22 @@ export function ProductCarousel() {
                           }}
                         >
                           <ShoppingCart className="mr-1 h-4 w-4" />
-                          <span className="hidden md:inline">Add</span>
+                          <span className="hidden md:inline">Add to Cart</span>
                         </Button>
-                        <Button size="sm" variant="secondary" asChild>
+                        <Button size="sm" variant="secondary" asChild className="bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg">
                           <Link href={`/product/${product.id}`} aria-label="Quick view">
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
                       </div>
+
+                      {/* Gradient Overlay on Hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-clay-brown/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
 
                     {/* Content */}
-                    <Link href={`/product/${product.id}`} className="block p-4 flex-1 flex flex-col">
-                      <h3 className="mb-2 line-clamp-2 text-sm font-medium text-clay-brown group-hover:text-terracotta transition-colors">
+                    <Link href={`/product/${product.id}`} className="block p-4 flex-1 flex flex-col bg-gradient-to-b from-white to-warm-beige/10">
+                      <h3 className="mb-2 line-clamp-2 text-sm font-medium text-clay-brown group-hover:text-terracotta transition-colors duration-300">
                         {title}
                       </h3>
 
@@ -221,7 +235,7 @@ export function ProductCarousel() {
                         <div className="flex items-center gap-2 flex-wrap">
                           {hasDiscount ? (
                             <>
-                              <span className="text-lg font-bold text-terracotta">
+                              <span className="text-lg font-bold bg-gradient-to-r from-terracotta to-orange-600 bg-clip-text text-transparent">
                                 {formatPrice(product.salePrice!)}
                               </span>
                               <span className="text-sm text-gray-400 line-through">
@@ -229,7 +243,7 @@ export function ProductCarousel() {
                               </span>
                             </>
                           ) : (
-                            <span className="text-lg font-bold text-terracotta">
+                            <span className="text-lg font-bold bg-gradient-to-r from-terracotta to-terracotta/80 bg-clip-text text-transparent">
                               {formatPrice(product.price)}
                             </span>
                           )}
@@ -241,45 +255,17 @@ export function ProductCarousel() {
               );
             })}
           </motion.div>
-
-          {/* Mobile Navigation Arrows */}
-          {products.length > 1 && (
-            <div className="flex sm:hidden justify-center gap-4 mt-6">
-              <button
-                onClick={handlePrev}
-                disabled={!canGoPrev}
-                className={`p-3 rounded-full border-2 transition-all ${
-                  canGoPrev
-                    ? 'border-clay-brown text-clay-brown active:bg-clay-brown active:text-white'
-                    : 'border-gray-200 text-gray-300'
-                }`}
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </button>
-              <button
-                onClick={handleNext}
-                disabled={!canGoNext}
-                className={`p-3 rounded-full border-2 transition-all ${
-                  canGoNext
-                    ? 'border-clay-brown text-clay-brown active:bg-clay-brown active:text-white'
-                    : 'border-gray-200 text-gray-300'
-                }`}
-              >
-                <ChevronRight className="h-6 w-6" />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* View All Button */}
-        <div className="text-center mt-10 sm:mt-14">
+        <div className="text-center mt-12 sm:mt-16">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <Button size="lg" variant="outline" asChild className="min-h-[52px] px-8 font-semibold border-2 border-clay-brown/30 hover:border-terracotta hover:bg-terracotta hover:text-white transition-all duration-300">
+            <Button size="lg" variant="outline" asChild className="min-h-[56px] px-10 font-semibold border-2 border-clay-brown/30 hover:border-terracotta hover:bg-gradient-to-r hover:from-terracotta hover:to-gold hover:text-white transition-all duration-300 rounded-full shadow-lg hover:shadow-2xl hover:scale-105">
               <Link href="/shop">View All Products</Link>
             </Button>
           </motion.div>

@@ -9,6 +9,8 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  writeBatch,
+  setDoc,
 } from 'firebase/firestore';
 import { getFirestoreDb, COLLECTIONS } from './config';
 import type { ReturnRequest, ReturnStatus } from '@prakash/types';
@@ -16,26 +18,47 @@ import type { ReturnRequest, ReturnStatus } from '@prakash/types';
 // Customer: Create return request
 export async function createReturnRequest(data: Omit<ReturnRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const db = getFirestoreDb();
+
+  // Remove undefined fields — Firestore doesn't support undefined values
+  const cleanData: Record<string, any> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined) {
+      cleanData[key] = value;
+    }
+  });
+
   const docData = {
-    ...data,
+    ...cleanData,
     status: 'requested' as ReturnStatus,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
-  const docRef = await addDoc(collection(db, COLLECTIONS.RETURN_REQUESTS), docData);
-
-  // Update order with return request ID
+  
+  // Use a batch to create return request and update order simultaneously
+  const batch = writeBatch(db);
+  
+  const returnRequestRef = doc(collection(db, COLLECTIONS.RETURN_REQUESTS));
+  batch.set(returnRequestRef, docData);
+  
+  // Update the order with return request info
   const orderRef = doc(db, COLLECTIONS.ORDERS, data.orderId);
   const orderSnap = await getDoc(orderRef);
+  
   if (orderSnap.exists()) {
-    const existingIds = orderSnap.data().returnRequestIds || [];
-    await updateDoc(orderRef, {
-      returnRequestIds: [...existingIds, docRef.id],
-      orderStatus: 'return_requested',
+    const orderData = orderSnap.data();
+    const existingReturnIds = orderData.returnRequestIds || [];
+    
+    batch.update(orderRef, {
+      returnRequestIds: [...existingReturnIds, returnRequestRef.id],
+      // Set order status to reflect return request
+      orderStatus: data.action === 'exchange' ? 'return_requested' : 'return_requested',
+      updatedAt: serverTimestamp(),
     });
   }
+  
+  await batch.commit();
 
-  return docRef.id;
+  return returnRequestRef.id;
 }
 
 // Customer: Get return requests by order ID
@@ -109,7 +132,36 @@ export async function updateReturnRequestStatus(
   if (status === 'refunded') {
     data.refundProcessedAt = serverTimestamp();
   }
+  
   await updateDoc(docRef, data);
+  
+  // Also update the order status to reflect the return status
+  const returnRequestSnap = await getDoc(docRef);
+  if (returnRequestSnap.exists()) {
+    const returnData = returnRequestSnap.data();
+    if (returnData.orderId) {
+      const orderRef = doc(db, COLLECTIONS.ORDERS, returnData.orderId);
+      
+      // Map return status to order status
+      let orderStatus: string = status;
+      if (status === 'approved' || status === 'picked_up') {
+        orderStatus = 'return_approved';
+      } else if (status === 'rejected') {
+        orderStatus = 'return_rejected';
+      } else if (status === 'refunded' || status === 'refund_processing') {
+        orderStatus = status === 'refund_processing' ? 'refund_processing' : 'refunded';
+      } else if (status === 'exchange_ordered') {
+        orderStatus = 'exchanged';
+      } else if (status === 'exchange_delivered') {
+        orderStatus = 'exchange_delivered';
+      }
+      
+      await updateDoc(orderRef, {
+        orderStatus,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  }
 }
 
 // Admin: Approve return request

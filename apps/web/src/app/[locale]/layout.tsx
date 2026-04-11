@@ -40,7 +40,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         <SettingsSync />
         <div className="relative flex min-h-screen flex-col overflow-x-hidden">
           <Header />
-          <main className="flex-1 pb-20 md:pb-0">{children}</main>
+          <main className="flex-1 pb-20 md:pb-0 pt-14 sm:pt-16">{children}</main>
           <Footer />
           <CartDrawer />
           <MobileNav />

@@ -339,7 +339,15 @@
     "statusPacking": "Packing",
     "statusShipped": "Shipped",
     "statusDelivered": "Delivered",
-    "statusCancelled": "Cancelled"
+    "statusCancelled": "Cancelled",
+    "statusReturnRequested": "Return Requested",
+    "statusReturnApproved": "Return Approved",
+    "statusReturnRejected": "Return Rejected",
+    "statusReturnReceived": "Return Received",
+    "statusRefundProcessing": "Refund Processing",
+    "statusRefunded": "Refunded",
+    "statusExchanged": "Exchanged",
+    "statusExchangeDelivered": "Exchange Delivered"
   },
   "wishlist": {
     "title": "My Wishlist",

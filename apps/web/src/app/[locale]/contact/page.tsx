@@ -193,7 +193,7 @@ export default function ContactPage() {
 
               <div className="space-y-4">
                 <a
-                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919876543210'}`}
+                  href={`https://wa.me/916290351365`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-start gap-4 rounded-xl border border-clay-brown/10 bg-white p-4 transition-colors hover:border-terracotta"
@@ -205,13 +205,13 @@ export default function ContactPage() {
                     <h3 className="font-semibold text-clay-brown">
                       {t('info.whatsapp')}
                     </h3>
-                    <p className="text-sm text-gray-600">{process.env.NEXT_PUBLIC_PHONE_NUMBER || '+91 98765 43210'}</p>
+                    <p className="text-sm text-gray-600">+91 6290351365</p>
                     <p className="text-xs text-terracotta">Click to chat</p>
                   </div>
                 </a>
 
                 <a
-                  href={`mailto:${process.env.NEXT_PUBLIC_EMAIL || 'hello@prakashclayworks.com'}`}
+                  href={`mailto:ROHANPANDITYY35@GMAIL.COM`}
                   className="flex items-start gap-4 rounded-xl border border-clay-brown/10 bg-white p-4 transition-colors hover:border-terracotta"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-terracotta/10">
@@ -222,7 +222,7 @@ export default function ContactPage() {
                       {t('info.email')}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {process.env.NEXT_PUBLIC_EMAIL || 'hello@prakashclayworks.com'}
+                      ROHANPANDITYY35@GMAIL.COM
                     </p>
                   </div>
                 </a>
@@ -242,7 +242,7 @@ export default function ContactPage() {
                 </div>
 
                 <a
-                  href={`tel:${process.env.NEXT_PUBLIC_PHONE_NUMBER || '+919876543210'}`}
+                  href={`tel:+916290351365`}
                   className="flex items-start gap-4 rounded-xl border border-clay-brown/10 bg-white p-4 transition-colors hover:border-terracotta"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-terracotta/10">
@@ -250,7 +250,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-clay-brown">Call Us</h3>
-                    <p className="text-sm text-gray-600">{process.env.NEXT_PUBLIC_PHONE_NUMBER || '+91 98765 43210'}</p>
+                    <p className="text-sm text-gray-600">+91 6290351365</p>
                   </div>
                 </a>
               </div>

@@ -7,9 +7,9 @@ import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { getOrderByNumber, getRefundAccounts, createReturnRequest } from '@prakash/firebase';
+import { getOrderByNumber, getRefundAccounts, createReturnRequest, getReturnRequestsByOrderId } from '@prakash/firebase';
 import { useAuth } from '@/context/AuthContext';
-import type { Order, ReturnAction } from '@prakash/types';
+import type { Order, ReturnAction, ReturnRequest } from '@prakash/types';
 import {
   Package,
   Loader2,
@@ -41,6 +41,9 @@ export default function OrderDetailsPage() {
   // Return modal
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [refundAccounts, setRefundAccounts] = useState<{ id: string; type: string; accountName: string; upiId?: string }[]>([]);
+  
+  // Return requests tracking
+  const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([]);
 
   const openReturnModal = async () => {
     if (user?.uid) {
@@ -59,6 +62,14 @@ export default function OrderDetailsPage() {
     reasonDetail: string;
     exchangeProductId?: string;
     refundAccountId?: string;
+    refundAccountType?: 'upi' | 'bank';
+    refundUpiId?: string;
+    refundBankDetails?: {
+      accountName: string;
+      accountNumber: string;
+      ifscCode: string;
+      bankName: string;
+    };
   }) => {
     if (!order || !user?.uid) return;
     const item = order.items[data.itemIndex];
@@ -79,11 +90,14 @@ export default function OrderDetailsPage() {
       action: data.action,
       exchangeProductId: data.exchangeProductId,
       refundAccountId: data.refundAccountId,
+      // New refund fields
+      refundUpiId: data.refundUpiId,
+      refundBankDetails: data.refundBankDetails,
     });
 
-    // Refresh order
-    const updated = await getOrderByNumber(orderNumber);
-    setOrder(updated);
+    // Refresh order and return requests
+    await fetchOrder();
+    setShowReturnModal(false);
   };
 
   useEffect(() => {
@@ -94,6 +108,12 @@ export default function OrderDetailsPage() {
     try {
       const data = await getOrderByNumber(orderNumber);
       setOrder(data);
+      
+      // Fetch return requests for this order
+      if (data?.id) {
+        const returns = await getReturnRequestsByOrderId(data.id);
+        setReturnRequests(returns);
+      }
     } catch (error) {
       console.error('Error fetching order:', error);
     } finally {
@@ -136,6 +156,18 @@ export default function OrderDetailsPage() {
   const getStatusIndex = (status: Order['orderStatus']) => {
     if (status === 'cancelled') return -1;
     return orderStatuses.indexOf(status);
+  };
+
+  const returnStatusLabel: Record<string, { label: string; color: string }> = {
+    requested: { label: 'Return Requested', color: 'bg-yellow-100 text-yellow-700' },
+    approved: { label: 'Return Approved', color: 'bg-green-100 text-green-700' },
+    rejected: { label: 'Return Rejected', color: 'bg-red-100 text-red-700' },
+    picked_up: { label: 'Item Picked Up', color: 'bg-blue-100 text-blue-700' },
+    refund_processing: { label: 'Refund Processing', color: 'bg-blue-100 text-blue-700' },
+    refunded: { label: 'Refunded', color: 'bg-green-100 text-green-700' },
+    exchange_ordered: { label: 'Exchange Ordered', color: 'bg-purple-100 text-purple-700' },
+    exchange_delivered: { label: 'Exchange Delivered', color: 'bg-green-100 text-green-700' },
+    closed: { label: 'Closed', color: 'bg-slate-100 text-slate-600' },
   };
 
   const getStatusLabel = (status: Order['orderStatus']) => {
@@ -341,6 +373,90 @@ export default function OrderDetailsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Return/Exchange Requests */}
+            {returnRequests.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ArrowLeftRight className="h-5 w-5 text-terracotta" />
+                    {t('returnExchangeRequests') || 'Return / Exchange Requests'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {returnRequests.map((ret) => {
+                      const statusInfo = returnStatusLabel[ret.status] || returnStatusLabel.requested;
+                      return (
+                        <div
+                          key={ret.id}
+                          className="p-4 bg-slate-50 rounded-lg border border-slate-200"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-terracotta" />
+                              <div>
+                                <p className="font-medium text-clay-brown">
+                                  {ret.itemTitle?.en || ret.itemId}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {ret.action === 'exchange' ? 'Exchange' : 'Refund'} Request
+                                </p>
+                              </div>
+                            </div>
+                            <Badge className={statusInfo.color}>
+                              {statusInfo.label}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <p className="text-slate-500 text-xs">Reason</p>
+                              <p className="text-clay-brown capitalize">{ret.reason}</p>
+                            </div>
+                            <div>
+                              <p className="text-slate-500 text-xs">Requested On</p>
+                              <p className="text-clay-brown">
+                                {ret.createdAt ? (() => {
+                                  let jsDate: Date;
+                                  if ((ret.createdAt as any).toDate) {
+                                    jsDate = (ret.createdAt as any).toDate();
+                                  } else if ((ret.createdAt as any).seconds) {
+                                    jsDate = new Date((ret.createdAt as any).seconds * 1000);
+                                  } else {
+                                    jsDate = new Date(ret.createdAt as any);
+                                  }
+                                  return isNaN(jsDate.getTime()) ? 'N/A' : jsDate.toLocaleDateString();
+                                })() : 'N/A'}
+                              </p>
+                            </div>
+                            {ret.action === 'refund' && ret.itemPrice && ret.itemQuantity && (
+                              <div>
+                                <p className="text-slate-500 text-xs">Refund Amount</p>
+                                <p className="text-clay-brown font-medium">
+                                  {formatPrice(ret.itemPrice * ret.itemQuantity)}
+                                </p>
+                              </div>
+                            )}
+                            {ret.exchangeOrderNumber && (
+                              <div>
+                                <p className="text-slate-500 text-xs">Exchange Order</p>
+                                <p className="text-purple-600 font-medium">{ret.exchangeOrderNumber}</p>
+                              </div>
+                            )}
+                          </div>
+                          {ret.adminNotes && (
+                            <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                              <p className="text-slate-600 text-xs font-medium mb-1">Admin Note:</p>
+                              <p className="text-clay-brown text-sm">{ret.adminNotes}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Order Summary & Details */}

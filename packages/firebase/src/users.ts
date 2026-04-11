@@ -370,22 +370,31 @@ export async function getUserNotifications(
   limitCount = 50
 ): Promise<Notification[]> {
   const db = getFirestoreDb();
-  const q = query(
-    collection(db, COLLECTIONS.NOTIFICATIONS),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
-    limit(limitCount)
-  );
+  try {
+    const q = query(
+      collection(db, COLLECTIONS.NOTIFICATIONS),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
 
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => {
-    const data = doc.data();
-    return {
-      ...data,
-      id: doc.id,
-      createdAt: data.createdAt?.toDate(),
-    } as Notification;
-  });
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: doc.id,
+        createdAt: data.createdAt?.toDate(),
+      } as Notification;
+    });
+  } catch (error) {
+    // Index may be building or not exist yet - return empty array
+    if (error instanceof Error && error.message.includes('index')) {
+      console.warn('Notification index still building or not available yet');
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
@@ -397,30 +406,46 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
 
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
   const db = getFirestoreDb();
-  const q = query(
-    collection(db, COLLECTIONS.NOTIFICATIONS),
-    where('userId', '==', userId),
-    where('isRead', '==', false)
-  );
+  try {
+    const q = query(
+      collection(db, COLLECTIONS.NOTIFICATIONS),
+      where('userId', '==', userId),
+      where('isRead', '==', false)
+    );
 
-  const snapshot = await getDocs(q);
-  const updates = snapshot.docs.map(docSnap =>
-    updateDoc(doc(db, COLLECTIONS.NOTIFICATIONS, docSnap.id), { isRead: true })
-  );
+    const snapshot = await getDocs(q);
+    const updates = snapshot.docs.map(docSnap =>
+      updateDoc(doc(db, COLLECTIONS.NOTIFICATIONS, docSnap.id), { isRead: true })
+    );
 
-  await Promise.all(updates);
+    await Promise.all(updates);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('index')) {
+      console.warn('Notification index still building or not available yet');
+      return;
+    }
+    throw error;
+  }
 }
 
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
   const db = getFirestoreDb();
-  const q = query(
-    collection(db, COLLECTIONS.NOTIFICATIONS),
-    where('userId', '==', userId),
-    where('isRead', '==', false)
-  );
+  try {
+    const q = query(
+      collection(db, COLLECTIONS.NOTIFICATIONS),
+      where('userId', '==', userId),
+      where('isRead', '==', false)
+    );
 
-  const snapshot = await getDocs(q);
-  return snapshot.size;
+    const snapshot = await getDocs(q);
+    return snapshot.size;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('index')) {
+      console.warn('Notification index still building or not available yet');
+      return 0;
+    }
+    throw error;
+  }
 }
 
 // ==================== USER SETTINGS ====================
@@ -726,8 +751,16 @@ export async function addRefundAccount(
     createdAt: now,
   };
 
+  // Remove undefined fields — Firestore doesn't support undefined values
+  const cleanAccount: Record<string, any> = {};
+  Object.entries(account).forEach(([key, value]) => {
+    if (value !== undefined) {
+      cleanAccount[key] = value;
+    }
+  });
+
   await setDoc(doc(db, COLLECTIONS.REFUND_ACCOUNTS, accountId), {
-    ...account,
+    ...cleanAccount,
     createdAt: Timestamp.fromDate(now),
   });
 

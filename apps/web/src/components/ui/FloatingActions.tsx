@@ -8,8 +8,8 @@ export function FloatingActions() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Contact details - Update these with actual contact info
-  const whatsappNumber = '+919876543210'; // Replace with actual WhatsApp number
-  const phoneNumber = '+919876543210'; // Replace with actual phone number
+  const whatsappNumber = '+916290351365'; // WhatsApp number
+  const phoneNumber = '+916290351365'; // Phone number
 
   const handleWhatsApp = () => {
     const message = encodeURIComponent('Hi! I am interested in your terracotta products.');

@@ -46,6 +46,7 @@ export default function NotificationsPage() {
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [indexError, setIndexError] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -63,6 +64,7 @@ export default function NotificationsPage() {
     if (!user?.uid) return;
 
     setLoading(true);
+    setIndexError(false);
     try {
       const [notifs, settings] = await Promise.all([
         getUserNotifications(user.uid),
@@ -71,7 +73,13 @@ export default function NotificationsPage() {
       setNotifications(notifs);
       setPreferences(settings.notificationPreferences);
     } catch (error) {
-      console.error('Error loading notifications:', error);
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('index')) {
+        setIndexError(true);
+        setNotifications([]);
+      } else {
+        console.error('Error loading notifications:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -204,7 +212,20 @@ export default function NotificationsPage() {
               )}
             </CardHeader>
             <CardContent>
-              {notifications.length === 0 ? (
+              {indexError ? (
+                <div className="text-center py-12">
+                  <Loader2 className="h-12 w-12 text-terracotta mx-auto mb-4 animate-spin" />
+                  <p className="text-clay-brown font-medium mb-2">
+                    Setting up notifications...
+                  </p>
+                  <p className="text-sm text-slate-500 max-w-md mx-auto">
+                    Our notification system is being configured. Please refresh the page in a few minutes.
+                  </p>
+                  <Button onClick={() => loadData()} className="mt-4" variant="outline">
+                    Try Again
+                  </Button>
+                </div>
+              ) : notifications.length === 0 ? (
                 <div className="text-center py-12">
                   <Bell className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                   <p className="text-slate-500">

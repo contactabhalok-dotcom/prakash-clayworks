@@ -122,6 +122,13 @@ export interface ReturnReason {
 export type ReturnAction = 'refund' | 'exchange';
 export type ReturnStatus = 'requested' | 'approved' | 'rejected' | 'picked_up' | 'refund_processing' | 'refunded' | 'exchange_ordered' | 'exchange_delivered' | 'closed';
 
+export interface RefundBankDetails {
+  accountName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+}
+
 export interface ReturnRequest {
   id: string;
   orderId: string;
@@ -143,7 +150,10 @@ export interface ReturnRequest {
   action: ReturnAction; // refund or exchange
   exchangeProductId?: string; // If exchange, which product
   // Refund account
-  refundAccountId?: string; // UPI/Bank account for refund
+  refundAccountId?: string; // Saved UPI/Bank account for refund
+  refundAccountType?: 'upi' | 'bank';
+  refundUpiId?: string; // UPI ID for refund
+  refundBankDetails?: RefundBankDetails; // Bank details for refund
   // Status
   status: ReturnStatus;
   adminNotes?: string;

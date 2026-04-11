@@ -10,18 +10,22 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Routes that don't require authentication
+  const publicRoutes = ['/login', '/setup'];
+  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname?.startsWith(route + '/'));
+
   useEffect(() => {
     if (!loading) {
       // Not logged in at all - redirect to login
-      if (!user && pathname !== '/login') {
+      if (!user && !isPublicRoute) {
         router.push('/login');
       }
       // Logged in but on login page - redirect to dashboard
-      else if (user && admin && pathname === '/login') {
+      else if (user && admin && (pathname === '/login' || pathname === '/setup')) {
         router.push('/');
       }
     }
-  }, [user, admin, loading, pathname, router]);
+  }, [user, admin, loading, pathname, router, isPublicRoute]);
 
   // Show loading state
   if (loading) {
@@ -36,7 +40,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   // Loading timed out (no user, no error, not redirected) - show helpful message
-  if (!user && !error && pathname !== '/login') {
+  if (!user && !error && !isPublicRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
@@ -67,12 +71,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   // Not logged in
-  if (!user && pathname !== '/login') {
+  if (!user && !isPublicRoute) {
     return null;
   }
 
-  // Logged in but not an admin (and not on login page)
-  if (user && !admin && pathname !== '/login') {
+  // Logged in but not an admin (and not on public route)
+  if (user && !admin && !isPublicRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">

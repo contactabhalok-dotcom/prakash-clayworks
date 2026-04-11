@@ -90,12 +90,6 @@ export function AnnouncementBanner() {
     <>
       <Sparkles className="a-icon flex-shrink-0" />
       <span className="a-txt">{title}</span>
-      {currentAnnouncement.discount && (
-        <>
-          <span className="a-dot" />
-          <span className="a-txt">{currentAnnouncement.discount}% OFF</span>
-        </>
-      )}
       {description && (
         <>
           <span className="a-dot" />

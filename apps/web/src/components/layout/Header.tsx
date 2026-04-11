@@ -27,12 +27,23 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState<{ type: 'product' | 'category', data: Product | Category }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const { openCart, getItemCount, _hasHydrated } = useCartStore();
   const { user, loading, signOut } = useAuth();
   const itemCount = getItemCount();
+
+  // Scroll detection for sticky navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Focus search input when opened
   useEffect(() => {
@@ -161,7 +172,14 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-clay-brown/10 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 shadow-sm">
+    <header 
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 w-full border-b transition-all duration-300",
+        isScrolled 
+          ? "border-clay-brown/15 bg-white/98 backdrop-blur-xl supports-[backdrop-filter]:bg-white/95 shadow-lg shadow-clay-brown/10" 
+          : "border-clay-brown/10 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/90 shadow-md shadow-clay-brown/5"
+      )}
+    >
       <div className="mx-auto px-3 sm:px-4 lg:px-8 w-full">
         <div className="flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4">
           {/* Logo - Responsive */}

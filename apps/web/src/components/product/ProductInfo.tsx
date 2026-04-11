@@ -51,6 +51,13 @@ export function ProductInfo({ product }: ProductInfoProps) {
     window.location.href = `/${locale}/checkout`;
   };
 
+  const handleWhatsAppOrder = () => {
+    const productName = getLocalizedText(product.title, locale);
+    const price = product.salePrice ? formatPrice(product.salePrice!) : formatPrice(product.price);
+    const message = encodeURIComponent(`Hi! I'm interested in ordering:\n\n🏺 *${productName}*\n💰 Price: ${price}\n📦 Quantity: ${quantity}\n\nPlease share more details and availability. Thank you!`);
+    window.open(`https://wa.me/916290351365?text=${message}`, '_blank');
+  };
+
   const handleShare = () => {
     const url = window.location.href;
     const text = `Check out this ${getLocalizedText(product.title, locale)} from Prakash Clayworks!`;
@@ -224,9 +231,19 @@ export function ProductInfo({ product }: ProductInfoProps) {
             {tc('buyNow')}
           </Button>
         </div>
-        
-        {/* Row 2: Share button */}
-        <div className="relative flex justify-center sm:justify-start">
+
+        {/* Row 2: WhatsApp Order + Share buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleWhatsAppOrder}
+            className="flex-1 flex items-center justify-center gap-2 min-h-[48px] px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+            disabled={product.stock === 0}
+          >
+            <MessageCircle className="h-5 w-5" />
+            <span className="hidden sm:inline">Order via WhatsApp</span>
+            <span className="sm:hidden">WhatsApp</span>
+          </button>
+          <div className="relative flex justify-center sm:justify-start">
           <button
             onClick={handleShare}
             className="flex items-center gap-2 min-h-[44px] px-5 py-2.5 border-2 border-clay-brown/20 rounded-xl text-sm font-medium text-clay-brown hover:border-terracotta/50 hover:text-terracotta hover:bg-terracotta/5 transition-all duration-200"
@@ -268,6 +285,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
               </div>
             </>
           )}
+          </div>
         </div>
       </div>
 

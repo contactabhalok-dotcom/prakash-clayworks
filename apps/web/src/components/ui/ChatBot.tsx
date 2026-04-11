@@ -142,37 +142,40 @@ export function ChatBot() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-24 right-4 z-[65] w-[calc(100vw-2rem)] sm:w-96 max-h-[600px] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200"
+            className="fixed bottom-24 right-4 z-[65] w-[calc(100vw-2rem)] sm:w-96 max-h-[calc(100vh-8rem)] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-terracotta to-clay-brown p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+            <div className="bg-gradient-to-r from-terracotta to-clay-brown p-4 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
                   <MessageCircle className="h-5 w-5 text-white" />
                 </div>
-                <div>
-                  <h3 className="text-white font-semibold text-sm">
+                <div className="min-w-0">
+                  <h3 className="text-white font-semibold text-sm truncate">
                     ClayWorks Assistant
                   </h3>
-                  <p className="text-white/80 text-xs">
+                  <p className="text-white/80 text-xs truncate">
                     {isLoading ? 'Typing...' : 'Online'}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                 <button
                   onClick={() => setIsMinimized(!isMinimized)}
-                  className="h-8 w-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors"
+                  className="h-9 w-9 min-w-[36px] min-h-[36px] rounded-full hover:bg-white/20 flex items-center justify-center transition-colors touch-manipulation"
                   aria-label={isMinimized ? 'Expand' : 'Minimize'}
                 >
-                  <Minimize2 className="h-4 w-4 text-white" />
+                  <Minimize2 className="h-5 w-5 text-white" />
                 </button>
                 <button
-                  onClick={() => setIsOpen(false)}
-                  className="h-8 w-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsMinimized(false);
+                  }}
+                  className="h-9 w-9 min-w-[36px] min-h-[36px] rounded-full hover:bg-white/20 flex items-center justify-center transition-colors touch-manipulation"
                   aria-label="Close chat"
                 >
-                  <X className="h-4 w-4 text-white" />
+                  <X className="h-5 w-5 text-white" />
                 </button>
               </div>
             </div>
@@ -180,7 +183,7 @@ export function ChatBot() {
             {/* Messages */}
             {!isMinimized && (
               <>
-                <div className="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 min-h-0">
                   {messages.map((message) => (
                     <motion.div
                       key={message.id}
@@ -221,7 +224,7 @@ export function ChatBot() {
                 {/* Input */}
                 <form
                   onSubmit={handleSubmit}
-                  className="p-4 border-t border-gray-200 bg-white"
+                  className="p-4 border-t border-gray-200 bg-white flex-shrink-0"
                 >
                   <div className="flex items-center gap-2">
                     <input
@@ -230,13 +233,13 @@ export function ChatBot() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="Type your message..."
-                      className="flex-1 px-4 py-2.5 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-terracotta/50 focus:border-terracotta transition-all"
+                      className="flex-1 px-4 py-2.5 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-terracotta/50 focus:border-terracotta transition-all min-w-0"
                       disabled={isLoading}
                     />
                     <button
                       type="submit"
                       disabled={!input.trim() || isLoading}
-                      className="h-10 w-10 rounded-full bg-terracotta hover:bg-terracotta/90 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center transition-all"
+                      className="h-10 w-10 min-w-[40px] rounded-full bg-terracotta hover:bg-terracotta/90 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center transition-all touch-manipulation"
                       aria-label="Send message"
                     >
                       {isLoading ? (

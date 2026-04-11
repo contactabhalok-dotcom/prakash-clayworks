@@ -3,28 +3,52 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
-import { ArrowRight, Sparkles, Star, Truck, Leaf, Award, ChevronDown, Play } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { ArrowRight, Sparkles, Star, ChevronDown, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getActiveBanners } from '@prakash/firebase';
+import type { Banner } from '@prakash/types';
 
 export function HeroBanner() {
   const t = useTranslations('hero');
   const { scrollY } = useScroll();
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
-  useMotionValueEvent(scrollY, 'change', (latest) => {
-    const progress = Math.min(latest / (window.innerHeight || 800), 1);
-    setScrollProgress(progress);
-  });
+  // Fetch active banners from Firestore
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const activeBanners = await getActiveBanners();
+        if (activeBanners.length > 0) {
+          setBanners(activeBanners);
+        }
+      } catch (error) {
+        console.error('Error fetching banners:', error);
+      }
+    };
+    fetchBanners();
+  }, []);
+
+  // Auto-rotate banners every 5 seconds
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [banners.length]);
 
   const yBackground = useTransform(scrollY, [0, 500], [0, -150]);
-  const yForeground = useTransform(scrollY, [0, 500], [0, -80]);
-  const opacityOverlay = useTransform(scrollY, [0, 300], [0, 0.6]);
+
+  const currentBanner = banners[currentBannerIndex];
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-warm-beige via-white to-warm-beige/50">
       {/* ===== PREMIUM ANIMATED BACKGROUND ===== */}
-      <motion.div style={{ y: yBackground }} className="absolute inset-0 overflow-hidden">
+      <motion.div style={{ y: yBackground }} className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3], x: [0, 40, -20, 0], y: [0, -30, 20, 0] }}
           transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
@@ -38,7 +62,7 @@ export function HeroBanner() {
         <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.3, 0.15], x: [0, 60, -30, 0] }}
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 6 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] sm:h-[800px] sm:w-[800px] rounded-full bg-gradient-to-r from-clay-brown/10 via-terracotta/10 to-gold/10 blur-3xl"
+          className="absolute top-1/2 right-0 translate-x-1/4 -translate-y-1/2 h-[500px] w-[500px] sm:h-[800px] sm:w-[800px] rounded-full bg-gradient-to-r from-clay-brown/10 via-terracotta/10 to-gold/10 blur-3xl"
         />
         <motion.div
           initial={{ opacity: 0 }}
@@ -58,8 +82,8 @@ export function HeroBanner() {
       </motion.div>
 
       {/* ===== MAIN CONTENT ===== */}
-      <motion.div style={{ y: yForeground }} className="relative">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-20">
+      <div className="relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen flex flex-col justify-center py-10 sm:py-14 lg:py-20">
           <div className="grid gap-8 sm:gap-10 lg:gap-14 grid-cols-1 lg:grid-cols-2 w-full items-center max-w-7xl mx-auto">
 
             {/* ===== LEFT CONTENT ===== */}
@@ -67,7 +91,7 @@ export function HeroBanner() {
               initial={{ opacity: 0, x: -60 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, ease: "easeOut" }}
-              className="flex flex-col items-center lg:items-start justify-center space-y-4 sm:space-y-5 lg:space-y-7"
+              className="flex flex-col items-center lg:items-start justify-center space-y-4 sm:space-y-5 lg:space-y-7 py-4 lg:py-0"
             >
               {/* Premium Badge */}
               <motion.div
@@ -92,28 +116,28 @@ export function HeroBanner() {
                   whileHover={{ scale: 1.05 }}
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-gold/15 to-amber-500/15 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold text-gold border border-gold/30 shadow-xl backdrop-blur-md"
                 >
-                  <Award className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="tracking-wide">Premium Quality</span>
                 </motion.div>
               </motion.div>
 
-              {/* Main Heading */}
+              {/* Main Heading - Dynamic from Firestore or default */}
               <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.4 }}>
                 <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight text-center lg:text-left">
                   <span className="bg-gradient-to-r from-clay-brown via-terracotta to-gold bg-clip-text text-transparent drop-shadow-sm">
-                    {t('title')}
+                    {currentBanner?.title?.en || t('title')}
                   </span>
                 </h1>
               </motion.div>
 
-              {/* Subtitle */}
+              {/* Subtitle - Dynamic from Firestore or default */}
               <motion.p
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
                 className="max-w-xl text-base sm:text-lg text-clay-brown/75 leading-relaxed font-medium text-center lg:text-left"
               >
-                {t('subtitle')}
+                {currentBanner?.subtitle?.en || t('subtitle')}
               </motion.p>
 
               {/* CTA Buttons */}
@@ -126,14 +150,19 @@ export function HeroBanner() {
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="group relative">
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-terracotta to-gold opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-60" />
                   <Button size="lg" className="relative min-h-[50px] sm:min-h-[56px] px-6 sm:px-8 text-sm sm:text-base font-bold shadow-xl bg-gradient-to-r from-terracotta to-terracotta hover:from-terracotta hover:to-gold transition-all duration-300 rounded-xl text-white" asChild>
-                    <Link href="/shop" className="flex items-center gap-2">
-                      {t('shopNow')}
+                    <Link href={currentBanner?.buttonLink || '/shop'} className="flex items-center gap-2">
+                      {currentBanner?.buttonText?.en || t('shopNow')}
                       <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
                     </Link>
                   </Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button size="lg" variant="outline" className="min-h-[50px] sm:min-h-[56px] px-6 sm:px-8 text-sm sm:text-base font-bold border-2 border-clay-brown/30 text-clay-brown hover:bg-warm-beige/60 hover:border-terracotta/50 transition-all duration-300 rounded-xl" asChild>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="min-h-[50px] sm:min-h-[56px] px-6 sm:px-8 text-sm sm:text-base font-bold border-2 border-clay-brown/40 text-clay-brown hover:bg-terracotta/10 hover:border-terracotta hover:text-terracotta transition-all duration-300 rounded-xl"
+                    asChild
+                  >
                     <Link href="/shop" className="flex items-center gap-2">
                       <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       {t('exploreCollection')}
@@ -141,129 +170,113 @@ export function HeroBanner() {
                   </Button>
                 </motion.div>
               </motion.div>
+
+              {/* Banner Indicators (if multiple banners) */}
+              {banners.length > 1 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="flex gap-2 mt-4"
+                >
+                  {banners.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentBannerIndex(index)}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        index === currentBannerIndex
+                          ? 'w-8 bg-gradient-to-r from-terracotta to-gold'
+                          : 'w-2 bg-clay-brown/30 hover:bg-clay-brown/50'
+                      }`}
+                      aria-label={`Go to banner ${index + 1}`}
+                    />
+                  ))}
+                </motion.div>
+              )}
             </motion.div>
 
             {/* ===== RIGHT - HERO IMAGE ===== */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.85, x: 60 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              transition={{ duration: 1.1, delay: 0.4, ease: "easeOut" }}
-              className="relative flex items-center justify-center"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+              className="relative flex items-center justify-center py-8 lg:py-0"
             >
-              <div className="relative">
+              {/* Main image container - Clean premium design */}
+              <div className="relative w-full max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-xl">
+
+                {/* Layer 1: Soft ambient glow behind image */}
                 <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-4 sm:-inset-6 rounded-full bg-gradient-to-r from-terracotta/30 via-gold/30 to-terracotta/30 blur-2xl"
+                  animate={{ opacity: [0.4, 0.6, 0.4] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute -inset-8 sm:-inset-12 rounded-2xl bg-gradient-to-br from-terracotta/25 via-gold/15 to-transparent blur-2xl"
+                />
+
+                {/* Layer 2: Main image with elegant shadow */}
+                <motion.div
+                  className="relative rounded-2xl overflow-hidden bg-white shadow-[0_20px_60px_-15px_rgba(74,44,26,0.3)]"
+                  whileHover={{ y: -5 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                >
+                  {/* Main hero image */}
+                  <img
+                    src="/hero.png"
+                    alt="Handcrafted Terracotta Products"
+                    className="w-full h-auto object-contain"
+                    style={{ objectPosition: 'center center' }}
+                    loading="eager"
+                  />
+                  
+                  {/* Subtle top gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-clay-brown/10 pointer-events-none" />
+                </motion.div>
+
+                {/* Layer 3: Elegant corner accents */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1, duration: 0.5 }}
+                  className="absolute -top-3 -left-3 w-10 h-10 sm:w-12 sm:h-12 rounded-lg border-2 border-terracotta/40 bg-gradient-to-br from-terracotta/10 to-transparent"
                 />
                 <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-2 sm:-inset-2.5 rounded-full bg-gradient-to-r from-terracotta via-gold to-terracotta p-[2px] sm:p-[2.5px] shadow-2xl"
-                >
-                  <div className="h-full w-full rounded-full bg-transparent" />
-                </motion.div>
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1.2, duration: 0.5 }}
+                  className="absolute -bottom-3 -right-3 w-10 h-10 sm:w-12 sm:h-12 rounded-lg border-2 border-gold/40 bg-gradient-to-tl from-gold/10 to-transparent"
+                />
+
+                {/* Layer 4: Small floating badge */}
                 <motion.div
-                  animate={{ scale: [1, 1.02, 1] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative h-[240px] w-[240px] sm:h-[340px] sm:w-[340px] md:h-[400px] md:w-[400px] overflow-hidden rounded-full bg-gradient-to-br from-warm-beige to-white shadow-2xl lg:h-[460px] lg:w-[460px]"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1.3, duration: 0.7, type: "spring" }}
+                  whileHover={{ scale: 1.05 }}
+                  className="absolute -bottom-4 -left-4 sm:-bottom-6 sm:-left-6 flex items-center gap-1.5 sm:gap-2 bg-white rounded-xl shadow-lg px-3 sm:px-4 py-2 sm:py-2.5 border border-clay-brown/10"
                 >
-                  <img src="/hero.jpeg" alt="Handcrafted Terracotta Products" className="h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(74,44,26,0.15)_100%)]" />
+                  <div className="flex -space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-gold text-gold" />
+                    ))}
+                  </div>
+                  <span className="text-xs sm:text-sm font-semibold text-clay-brown">Premium Quality</span>
                 </motion.div>
 
-                {/* Floating Card 1 */}
-                <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute -left-2 sm:-left-6 -top-4 sm:-top-6 z-10">
-                  <div className="rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-xl p-2.5 sm:p-4 shadow-xl border border-slate-100/50">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 shadow-lg">
-                        <Leaf className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-clay-brown text-xs sm:text-sm">{t('ecoFriendly')}</p>
-                        <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 hidden sm:block">{t('naturalClay')}</p>
-                      </div>
-                    </div>
-                  </div>
+                {/* Layer 5: Top-right sparkle */}
+                <motion.div
+                  animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0 }}
+                  className="absolute -top-2 -right-2 text-gold"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="drop-shadow-md">
+                    <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />
+                  </svg>
                 </motion.div>
 
-                {/* Floating Card 2 */}
-                <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 2 }} className="absolute -right-2 sm:-right-6 top-[10%] sm:top-[15%] z-10">
-                  <div className="rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-xl p-2.5 sm:p-4 shadow-xl border border-slate-100/50">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-lg">
-                        <Truck className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-clay-brown text-xs sm:text-sm">{t('panIndia')}</p>
-                        <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 hidden sm:block">{t('freeDelivery500')}</p>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Quality Badge */}
-                <motion.div animate={{ y: [0, -8, 0], rotate: [0, 5, -5, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }} className="absolute -right-1 sm:-right-2 -top-2 sm:-top-3 z-10">
-                  <div className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-gold to-amber-500 p-2.5 sm:p-3.5 shadow-2xl">
-                    <Award className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
-                  </div>
-                </motion.div>
               </div>
             </motion.div>
           </div>
         </div>
-
-        {/* ===== FULL-WIDTH TRUST FEATURES ===== */}
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.7 }} className="container mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-4 max-w-7xl mx-auto">
-            {[
-              { icon: Leaf, label: t('ecoFriendly'), sublabel: t('naturalClay'), color: 'from-green-500 to-emerald-500' },
-              { icon: Truck, label: t('panIndia'), sublabel: t('freeDelivery500'), color: 'from-blue-500 to-indigo-500' },
-              { icon: Award, label: 'Premium Quality', sublabel: 'Handcrafted with love', color: 'from-gold to-amber-500' },
-            ].map((feature, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.8 + i * 0.1 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl bg-gradient-to-br border border-clay-brown/10 shadow-lg backdrop-blur-sm cursor-default transition-all duration-300 hover:shadow-xl flex-1 min-w-[160px] sm:min-w-[220px] justify-center"
-              >
-                <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-gradient-to-br ${feature.color} shadow-lg flex-shrink-0`}>
-                  <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-bold text-clay-brown text-xs sm:text-sm">{feature.label}</p>
-                  <p className="text-[10px] sm:text-xs text-clay-brown/65 font-medium hidden sm:block">{feature.sublabel}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* ===== FULL-WIDTH STATS ===== */}
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }} className="container mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-10">
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-4 max-w-7xl mx-auto">
-            {[
-              { value: '500+', label: t('happyCustomers'), gradient: 'from-terracotta to-gold' },
-              { value: '100+', label: t('uniqueProducts'), gradient: 'from-gold to-terracotta' },
-              { value: '50+', label: t('artisans'), gradient: 'from-clay-brown to-terracotta' },
-            ].map((stat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.7, delay: 1 + i * 0.1 }}
-                whileHover={{ scale: 1.08, y: -5 }}
-                className="text-center p-3 sm:p-4 rounded-xl bg-gradient-to-br border border-clay-brown/10 shadow-lg backdrop-blur-sm cursor-default flex-1 min-w-[140px] sm:min-w-[180px]"
-              >
-                <p className={`text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>{stat.value}</p>
-                <p className="text-[10px] sm:text-xs md:text-sm text-clay-brown/70 font-semibold mt-1 sm:mt-2">{stat.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </motion.div>
+      </div>
 
       {/* ===== SCROLL INDICATOR ===== */}
       <motion.div

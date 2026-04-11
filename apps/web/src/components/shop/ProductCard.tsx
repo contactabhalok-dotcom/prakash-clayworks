@@ -6,7 +6,7 @@ import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { ShoppingBag, Eye, Heart } from 'lucide-react';
+import { ShoppingBag, Eye, Heart, MessageCircle } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
 import { useWishlistStore } from '@/store/wishlist';
 import { formatPrice, calculateDiscount, getLocalizedText } from '@/lib/utils';
@@ -47,6 +47,15 @@ export function ProductCard({ product }: ProductCardProps) {
     toggleItem(product);
   };
 
+  const handleWhatsAppOrder = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const productName = getLocalizedText(product.title, locale);
+    const price = product.salePrice ? formatPrice(product.salePrice!) : formatPrice(product.price);
+    const message = encodeURIComponent(`Hi! I'm interested in ordering:\n\n🏺 *${productName}*\n💰 Price: ${price}\n\nPlease share more details and availability. Thank you!`);
+    window.open(`https://wa.me/916290351365?text=${message}`, '_blank');
+  };
+
   const isProductInWishlist = isInWishlist(product.id);
 
   return (
@@ -79,7 +88,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </button>
 
           {/* Badges */}
-          <div className="absolute left-3 top-3 flex flex-col gap-2 pointer-events-none z-10">
+          <div className="absolute left-3 top-3 z-40 flex flex-col gap-2 pointer-events-none">
             {product.isNewArrival && (
               <Badge variant="gold">{t('newArrivals')}</Badge>
             )}
@@ -109,6 +118,14 @@ export function ProductCard({ product }: ProductCardProps) {
               aria-label="Quick view"
             >
               <Eye className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg h-9 rounded-md px-3 min-h-[40px] sm:min-h-[36px]"
+              onClick={handleWhatsAppOrder}
+              aria-label="Order via WhatsApp"
+            >
+              <MessageCircle className="h-4 w-4" />
             </button>
           </div>
         </div>

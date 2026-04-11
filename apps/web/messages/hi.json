@@ -339,7 +339,15 @@
     "statusPacking": "पैकिंग",
     "statusShipped": "भेज दिया गया",
     "statusDelivered": "डिलीवर हो गया",
-    "statusCancelled": "रद्द"
+    "statusCancelled": "रद्द",
+    "statusReturnRequested": "रिटर्न अनुरोध किया गया",
+    "statusReturnApproved": "रिटर्न स्वीकृत",
+    "statusReturnRejected": "रिटर्न अस्वीकृत",
+    "statusReturnReceived": "रिटर्न प्राप्त हुआ",
+    "statusRefundProcessing": "रिफंड प्रक्रिया में",
+    "statusRefunded": "रिफंड किया गया",
+    "statusExchanged": "एक्सचेंज किया गया",
+    "statusExchangeDelivered": "एक्सचेंज डिलीवर हुआ"
   },
   "wishlist": {
     "title": "मेरी विशलिस्ट",

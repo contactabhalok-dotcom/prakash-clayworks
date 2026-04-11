@@ -110,18 +110,18 @@ export function Footer() {
 
             <div className="space-y-2 pt-4">
               <a
-                href={`tel:${process.env.NEXT_PUBLIC_PHONE_NUMBER || '+919876543210'}`}
+                href="tel:+916290351365"
                 className="flex items-center gap-2 text-sm text-white/80 hover:text-terracotta"
               >
                 <Phone className="h-4 w-4" />
-                {process.env.NEXT_PUBLIC_PHONE_NUMBER || '+91 98765 43210'}
+                +91 6290351365
               </a>
               <a
-                href={`mailto:${process.env.NEXT_PUBLIC_EMAIL || 'hello@prakashclayworks.com'}`}
+                href="mailto:ROHANPANDITYY35@GMAIL.COM"
                 className="flex items-center gap-2 text-sm text-white/80 hover:text-terracotta"
               >
                 <Mail className="h-4 w-4" />
-                {process.env.NEXT_PUBLIC_EMAIL || 'hello@prakashclayworks.com'}
+                ROHANPANDITYY35@GMAIL.COM
               </a>
               <div className="flex items-start gap-2 text-sm text-white/80">
                 <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />

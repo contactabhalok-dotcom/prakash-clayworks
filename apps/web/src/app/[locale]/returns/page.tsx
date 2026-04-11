@@ -53,8 +53,24 @@ export default function ReturnsPage() {
     }
   }, [user]);
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-IN', {
+  const formatDate = (date: any) => {
+    if (!date) return 'N/A';
+    
+    // Handle Firestore Timestamp objects
+    let jsDate: Date;
+    if (date.toDate) {
+      // Firestore Timestamp
+      jsDate = date.toDate();
+    } else if (date.seconds) {
+      // Firestore timestamp object (from serverTimestamp)
+      jsDate = new Date(date.seconds * 1000);
+    } else {
+      jsDate = new Date(date);
+    }
+    
+    if (isNaN(jsDate.getTime())) return 'N/A';
+    
+    return jsDate.toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-IN', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

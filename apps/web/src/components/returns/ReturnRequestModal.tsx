@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ArrowLeftRight, IndianRupee, AlertCircle, Upload, ChevronRight, Package } from 'lucide-react';
+import { X, ArrowLeftRight, IndianRupee, AlertCircle, Upload, ChevronRight, Package, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,12 +29,20 @@ interface Props {
     reasonDetail: string;
     exchangeProductId?: string;
     refundAccountId?: string;
+    refundAccountType?: 'upi' | 'bank';
+    refundUpiId?: string;
+    refundBankDetails?: {
+      accountName: string;
+      accountNumber: string;
+      ifscCode: string;
+      bankName: string;
+    };
   }) => Promise<void>;
-  refundAccounts: { id: string; type: string; accountName: string; upiId?: string }[];
+  refundAccounts: { id: string; type: string; accountName: string; upiId?: string; accountNumber?: string; bankName?: string; ifscCode?: string; isDefault?: boolean }[];
 }
 
 export function ReturnRequestModal({ order, onClose, onSubmit, refundAccounts }: Props) {
-  const [step, setStep] = useState<'item' | 'action' | 'reason' | 'details' | 'exchange' | 'confirm'>('item');
+  const [step, setStep] = useState<'item' | 'action' | 'reason' | 'details' | 'exchange' | 'confirm' | 'refund-method'>('item');
   const [selectedItemIndex, setSelectedItemIndex] = useState<number>(-1);
   const [selectedAction, setSelectedAction] = useState<ReturnAction>('refund');
   const [selectedReason, setSelectedReason] = useState('');
@@ -44,6 +52,14 @@ export function ReturnRequestModal({ order, onClose, onSubmit, refundAccounts }:
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [selectedExchangeProduct, setSelectedExchangeProduct] = useState<string>('');
   const [selectedRefundAccount, setSelectedRefundAccount] = useState('');
+  const [refundMethod, setRefundMethod] = useState<'upi' | 'bank'>('upi');
+  const [manualUpiId, setManualUpiId] = useState('');
+  const [bankForm, setBankForm] = useState({
+    accountName: '',
+    accountNumber: '',
+    ifscCode: '',
+    bankName: '',
+  });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,21 +81,42 @@ export function ReturnRequestModal({ order, onClose, onSubmit, refundAccounts }:
     if (step === 'details') return true;
     if (step === 'exchange') return !!selectedExchangeProduct;
     if (step === 'confirm') return true;
+    if (step === 'refund-method') {
+      if (refundMethod === 'upi') {
+        return manualUpiId.trim().includes('@');
+      }
+      return bankForm.accountName && bankForm.accountNumber && bankForm.ifscCode && bankForm.bankName;
+    }
     return false;
   };
 
   const handleNext = () => {
     if (!canProceed()) return;
     if (step === 'item') {
-      // If action is exchange, go to exchange step after action
       setStep('action');
     } else if (step === 'action') {
       if (selectedAction === 'exchange') {
         setStep('exchange');
       } else {
-        setStep('reason');
+        // If refund, go to refund method selection
+        if (selectedAction === 'refund') {
+          // Auto-select if there's a default UPI account
+          const defaultUpi = refundAccounts.find(a => a.type === 'upi' && a.isDefault);
+          if (defaultUpi) {
+            setSelectedRefundAccount(defaultUpi.id);
+            setRefundMethod('upi');
+            setManualUpiId(defaultUpi.upiId || '');
+            setStep('reason');
+          } else {
+            setStep('refund-method');
+          }
+        } else {
+          setStep('reason');
+        }
       }
     } else if (step === 'exchange') {
+      setStep('reason');
+    } else if (step === 'refund-method') {
       setStep('reason');
     } else if (step === 'reason') {
       setStep('confirm');
@@ -89,7 +126,12 @@ export function ReturnRequestModal({ order, onClose, onSubmit, refundAccounts }:
   const handleBack = () => {
     if (step === 'action') setStep('item');
     else if (step === 'exchange') setStep('action');
-    else if (step === 'reason') setStep(selectedAction === 'exchange' ? 'exchange' : 'action');
+    else if (step === 'refund-method') setStep('action');
+    else if (step === 'reason') {
+      if (selectedAction === 'exchange') setStep('exchange');
+      else if (selectedAction === 'refund') setStep('refund-method');
+      else setStep('action');
+    }
     else if (step === 'confirm') setStep('reason');
   };
 
@@ -106,6 +148,9 @@ export function ReturnRequestModal({ order, onClose, onSubmit, refundAccounts }:
         reasonDetail,
         exchangeProductId: selectedExchangeProduct || undefined,
         refundAccountId: selectedRefundAccount || undefined,
+        refundAccountType: selectedAction === 'refund' ? refundMethod : undefined,
+        refundUpiId: selectedAction === 'refund' && refundMethod === 'upi' ? manualUpiId.trim() : undefined,
+        refundBankDetails: selectedAction === 'refund' && refundMethod === 'bank' ? bankForm : undefined,
       });
       onClose();
     } catch (err: any) {
@@ -137,11 +182,17 @@ export function ReturnRequestModal({ order, onClose, onSubmit, refundAccounts }:
 
         {/* Steps indicator */}
         <div className="px-6 pt-4">
-          <div className="flex items-center gap-1 text-xs text-slate-400">
-            <span className={step === 'item' ? 'text-terracotta font-medium' : ''}>Select Item</span>
+          <div className="flex items-center gap-1 text-xs text-slate-400 flex-wrap">
+            <span className={step === 'item' ? 'text-terracotta font-medium' : ''}>Item</span>
             <ChevronRight className="h-3 w-3" />
             <span className={step === 'action' || step === 'exchange' ? 'text-terracotta font-medium' : ''}>Action</span>
             <ChevronRight className="h-3 w-3" />
+            {selectedAction === 'refund' && (
+              <>
+                <span className={step === 'refund-method' ? 'text-terracotta font-medium' : ''}>Refund</span>
+                <ChevronRight className="h-3 w-3" />
+              </>
+            )}
             <span className={step === 'reason' || step === 'confirm' ? 'text-terracotta font-medium' : ''}>Reason</span>
             <ChevronRight className="h-3 w-3" />
             <span className={step === 'confirm' ? 'text-terracotta font-medium' : ''}>Confirm</span>
@@ -253,6 +304,167 @@ export function ReturnRequestModal({ order, onClose, onSubmit, refundAccounts }:
             </div>
           )}
 
+          {/* Step: Select Refund Method */}
+          {step === 'refund-method' && (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-500 mb-2">How would you like to receive your refund?</p>
+
+              {/* Method Type Selection */}
+              <div className="grid grid-cols-2 gap-3">
+                <Card
+                  className={`cursor-pointer border-2 transition-all ${
+                    refundMethod === 'upi' ? 'border-terracotta bg-terracotta/5' : 'border-slate-100 hover:border-terracotta/50'
+                  }`}
+                  onClick={() => setRefundMethod('upi')}
+                >
+                  <CardContent className="p-5 text-center">
+                    <svg className="h-10 w-10 mx-auto mb-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill={refundMethod === 'upi' ? '#BD6F34' : '#cbd5e1'}/>
+                      <path d="M9 12l2 2 4-4" stroke={refundMethod === 'upi' ? '#BD6F34' : '#cbd5e1'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <p className="font-bold text-clay-brown">UPI ID</p>
+                    <p className="text-xs text-slate-500 mt-1">Instant refund to UPI</p>
+                  </CardContent>
+                </Card>
+                <Card
+                  className={`cursor-pointer border-2 transition-all ${
+                    refundMethod === 'bank' ? 'border-terracotta bg-terracotta/5' : 'border-slate-100 hover:border-terracotta/50'
+                  }`}
+                  onClick={() => setRefundMethod('bank')}
+                >
+                  <CardContent className="p-5 text-center">
+                    <Building className={`h-10 w-10 mx-auto mb-2 ${refundMethod === 'bank' ? 'text-terracotta' : 'text-slate-300'}`} />
+                    <p className="font-bold text-clay-brown">Bank Account</p>
+                    <p className="text-xs text-slate-500 mt-1">NEFT/IMPS to bank</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* UPI Form */}
+              {refundMethod === 'upi' && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-700">
+                      <strong>Tip:</strong> Enter your UPI ID (e.g., yourname@paytm, mobile@upi, email@paytm)
+                    </p>
+                  </div>
+                  <Input
+                    placeholder="Enter UPI ID (e.g., yourname@upi)"
+                    value={manualUpiId}
+                    onChange={(e) => setManualUpiId(e.target.value)}
+                    className="text-sm"
+                  />
+                  {manualUpiId && !manualUpiId.includes('@') && (
+                    <p className="text-xs text-red-500">UPI ID must contain @ symbol (e.g., 9876543210@paytm)</p>
+                  )}
+
+                  {/* Saved UPI Accounts */}
+                  {refundAccounts.filter(a => a.type === 'upi').length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <p className="text-xs font-medium text-slate-500">Or select a saved UPI account:</p>
+                      {refundAccounts.filter(a => a.type === 'upi').map((acc) => (
+                        <button
+                          key={acc.id}
+                          onClick={() => {
+                            setSelectedRefundAccount(acc.id);
+                            setManualUpiId(acc.upiId || '');
+                          }}
+                          className={`w-full text-left p-3 rounded-lg border text-sm transition-all ${
+                            selectedRefundAccount === acc.id
+                              ? 'border-terracotta bg-terracotta/5'
+                              : 'border-slate-200 hover:border-terracotta/50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-clay-brown">{acc.accountName}</p>
+                              <p className="text-xs text-slate-500">{acc.upiId}</p>
+                            </div>
+                            {acc.isDefault && (
+                              <span className="text-[10px] px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">Default</span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Bank Account Form */}
+              {refundMethod === 'bank' && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-700">
+                      <strong>Note:</strong> Please provide accurate bank details for NEFT/IMPS transfer
+                    </p>
+                  </div>
+                  <Input
+                    placeholder="Account Holder Name"
+                    value={bankForm.accountName}
+                    onChange={(e) => setBankForm({ ...bankForm, accountName: e.target.value })}
+                    className="text-sm"
+                  />
+                  <Input
+                    placeholder="Bank Name (e.g., State Bank of India)"
+                    value={bankForm.bankName}
+                    onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })}
+                    className="text-sm"
+                  />
+                  <Input
+                    placeholder="Account Number"
+                    value={bankForm.accountNumber}
+                    onChange={(e) => setBankForm({ ...bankForm, accountNumber: e.target.value })}
+                    className="text-sm"
+                  />
+                  <Input
+                    placeholder="IFSC Code (e.g., SBIN0001234)"
+                    value={bankForm.ifscCode}
+                    onChange={(e) => setBankForm({ ...bankForm, ifscCode: e.target.value.toUpperCase() })}
+                    maxLength={11}
+                    className="text-sm"
+                  />
+
+                  {/* Saved Bank Accounts */}
+                  {refundAccounts.filter(a => a.type === 'bank').length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <p className="text-xs font-medium text-slate-500">Or select a saved bank account:</p>
+                      {refundAccounts.filter(a => a.type === 'bank').map((acc) => (
+                        <button
+                          key={acc.id}
+                          onClick={() => {
+                            setSelectedRefundAccount(acc.id);
+                            setBankForm({
+                              accountName: acc.accountName,
+                              accountNumber: acc.accountNumber || '',
+                              ifscCode: acc.ifscCode || '',
+                              bankName: acc.bankName || '',
+                            });
+                          }}
+                          className={`w-full text-left p-3 rounded-lg border text-sm transition-all ${
+                            selectedRefundAccount === acc.id
+                              ? 'border-terracotta bg-terracotta/5'
+                              : 'border-slate-200 hover:border-terracotta/50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-clay-brown">{acc.accountName}</p>
+                              <p className="text-xs text-slate-500">{acc.bankName} - ****{acc.accountNumber?.slice(-4)}</p>
+                            </div>
+                            {acc.isDefault && (
+                              <span className="text-[10px] px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">Default</span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Step 4: Select Reason */}
           {step === 'reason' && (
             <div className="space-y-4">
@@ -313,27 +525,22 @@ export function ReturnRequestModal({ order, onClose, onSubmit, refundAccounts }:
                         </span>
                       </div>
                     )}
-                    {refundAccounts.length > 0 && selectedAction === 'refund' && (
+                    {selectedAction === 'refund' && (
                       <div className="space-y-1 pt-2 border-t">
-                        <span className="text-slate-500 text-xs">Select refund account:</span>
-                        <div className="grid gap-1">
-                          {refundAccounts.map((acc) => (
-                            <button
-                              key={acc.id}
-                              onClick={() => setSelectedRefundAccount(acc.id)}
-                              className={`text-left p-2 rounded-lg border text-sm ${
-                                selectedRefundAccount === acc.id
-                                  ? 'border-terracotta bg-terracotta/5'
-                                  : 'border-slate-200'
-                              }`}
-                            >
-                              <p className="font-medium">{acc.accountName}</p>
-                              <p className="text-xs text-slate-500">{acc.type === 'upi' ? acc.upiId : 'Bank Account'}</p>
-                            </button>
-                          ))}
-                        </div>
-                        {!selectedRefundAccount && (
-                          <p className="text-xs text-amber-600">No account selected - admin will contact you for details</p>
+                        <span className="text-slate-500 text-xs">Refund Method:</span>
+                        {refundMethod === 'upi' ? (
+                          <div className="p-2 rounded-lg border border-terracotta/30 bg-terracotta/5">
+                            <p className="font-medium text-clay-brown text-sm">UPI ID</p>
+                            <p className="text-xs text-slate-600 font-mono">{manualUpiId || 'Not provided'}</p>
+                          </div>
+                        ) : (
+                          <div className="p-2 rounded-lg border border-terracotta/30 bg-terracotta/5">
+                            <p className="font-medium text-clay-brown text-sm">Bank Account</p>
+                            <p className="text-xs text-slate-600">{bankForm.accountName}</p>
+                            <p className="text-xs text-slate-600">{bankForm.bankName}</p>
+                            <p className="text-xs text-slate-600 font-mono">A/C: ****{bankForm.accountNumber?.slice(-4)}</p>
+                            <p className="text-xs text-slate-600 font-mono">IFSC: {bankForm.ifscCode}</p>
+                          </div>
                         )}
                       </div>
                     )}
